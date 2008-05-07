@@ -1,5 +1,15 @@
 import subprocess
 import os, sys, signal
+import re
+
+def findall(string, sub, listindex = [], offset = 0):
+  if (string.find(sub) == -1):
+    return listindex
+  else:
+    offset = string.index(sub)+offset
+    listindex.append(offset)
+    string = string[(string.index(sub)+1):]
+    return allindices(string, sub, listindex, offset+1)
 
 class lojbanNode:
   def __init__(self, ltype):
@@ -242,6 +252,18 @@ def invalidCharsChecker(text):
                 "mistake": "invalid character",
                 "suggestion": "There is no w in the lojbanic alphabet! Usually you can use a diphtong with u or a v instead."})
 
+  return sug
+
+@utcheck
+def invalidHPlacement(text):
+  sug = []
+  hs = findall(text, "'")
+  for h in hs:
+    if h == 0 or text[h-1] not in "aeiouy" or text[h+1] not in "aeiou":
+      sug.append({"range": [h, h+1],
+                  "mistake": "' in invalid position",
+                  "suggestion": "The ' can only appear between vowels."})
+  
   return sug
 
 #
