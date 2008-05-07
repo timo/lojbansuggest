@@ -1,5 +1,6 @@
 import subprocess
 import os, sys, signal
+import time
 
 def findall(string, sub, listindex, offset = 0):
   if (string.find(sub) == -1):
@@ -251,11 +252,26 @@ def forgotCuChecker(text, pt):
 @ltcheck
 def gadrilessNuChecker(text, pt):
   sug = []
-  for nuNode in pt.nodes['NU']:
-    if not nuNode.parentTest(lambda node: node.ltype == "sumti6"):
-      sug.append({"range": [0, 1], # FIXME: this sucks.
-                  "mistake": "possibly accidental gadriless NU",
-                  "suggestion": "while it's possible to build tanru with NU elements inside, it's probable that you forgot to put a gadri (lo usually) before your NU."})
+  if "NU" in pt.nodes:
+    for nuNode in pt.nodes['NU']:
+      if not nuNode.parentTest(lambda node: node.ltype == "sumti6"):
+        sug.append({"range": [0, 1], # FIXME: this sucks.
+                    "mistake": "possibly accidental gadriless NU",
+                    "suggestion": "while it's possible to build tanru with NU elements inside, it's probable that you forgot to put a gadri (lo usually) before your NU."})
+
+  return sug
+
+@ltcheck
+def dotSideCmevlaChecker(text, pt):
+  sug = []
+
+  if "cmene" in pt.nodes:
+    for cmeneNode in pt.nodes["cmene"]:
+      cmene = cmeneNode.children[0].text
+      if True in [a in cmene for a in ["la", "doi"]]:
+        sug.append({"range": [0, 1], # FIXME: blergh.
+                    "mistake": "non-dotside incompatible cmevla",
+                    "suggestion": "cmevla are not allowed to contain la or doi. The only way to use cmevla with la and doi inside is to be on the dot side"})
 
   return sug
 
@@ -286,7 +302,7 @@ def invalidCharsChecker(text):
   return sug
 
 @utcheck
-def invalidHPlacement(text):
+def invalidHPlacementChecker(text):
   sug = []
   hs = findall(text, "'", [])
   print hs
@@ -309,6 +325,14 @@ def analyze(text):
 def main():
   text = sys.stdin.readlines()
   analyze(text)
+
+print "Available checkers:"
+print " - for valid sentences:"
+print "   -",
+print "\n   - ".join(a.__name__ for a in ltcheckers)
+print " - for invalid sentences:"
+print "   -",
+print "\n   - ".join(a.__name__ for a in utcheckers)
 
 if __name__ == "__main__":
   main()
