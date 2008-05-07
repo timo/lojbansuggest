@@ -178,7 +178,7 @@ class unparsabletext:
 
     # see what broke...
     for ch in utcheckers:
-      self.sug.extend(ch(self.td, self.pt))
+      self.sug.extend(ch(self.td))
 
   def __str__(self):
     return "Unparsable Text: %s" % self.td
