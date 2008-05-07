@@ -1,8 +1,7 @@
 import subprocess
 import os, sys, signal
-import re
 
-def findall(string, sub, listindex = [], offset = 0):
+def findall(string, sub, listindex, offset = 0):
   if (string.find(sub) == -1):
     return listindex
   else:
@@ -15,9 +14,16 @@ class lojbanNode:
   def __init__(self, ltype):
     self.ltype = ltype
     self.children = []
+    self.parent = None
 
   def test(self, fun):
     return fun(self) + sum(bla.test(fun) for bla in self.children)
+
+  def parentTest(self, fun):
+    if self.parent:
+      return fun(self) + self.parent.parentTest(fun)
+    else:
+      return fun(self)
 
   def __str__(self):
     return "%s=( %s )" % (self.ltype, " ".join(str(child) for child in self.children))
@@ -26,9 +32,16 @@ class textNode:
   def __init__(self, text):
     self.ltype = "text"
     self.text = text
+    self.parent = None
 
   def test(self, fun):
     return fun(self)
+
+  def parentText(self, fun):
+    if self.parent:
+      return fun(self) + self.parent.parentTest(fun)
+    else:
+      return fun(self)
 
   def __str__(self):
     return self.text
@@ -65,6 +78,9 @@ class parseTree:
             break
 
           n.children = constructNode(insideText[1:-1])
+
+          for ch in n.children:
+            ch.parent = n
 
           remText = str(n)
           while "  " in text:
@@ -221,12 +237,27 @@ def forgotCuChecker(text, pt):
   if "sentence" not in pt.nodes:
     # there is no sentence node in the parse tree. Look for a selbri that has
     # more than one brivla inside.
-    selbrinode = pt.nodes['selbri3'][0]
-    if selbrinode.test(lambda node: node.ltype == "BRIVLA") > 0:
-      return [{"range": [0, 10],
-               "mistake": "forgot cu",
-               "suggestion": "There is no bridi in this sentence, but there is a tanru. Did you maybe forget to use cu to seperate a sumti from the intended selbri?"}]
+
+    # only look if there's a selbri, sentences with only vocatives for example
+    # are valid, too
+    if "selbri3" in pt.nodes:
+      selbrinode = pt.nodes['selbri3'][0]
+      if selbrinode.test(lambda node: node.ltype == "BRIVLA") > 0:
+        return [{"range": [0, 10], # FIXME: this sucks.
+                 "mistake": "forgot cu",
+                 "suggestion": "There is no bridi in this sentence, but there is a tanru. Did you maybe forget to use cu to seperate a sumti from the intended selbri?"}]
   return []
+
+@ltcheck
+def gadrilessNuChecker(text, pt):
+  sug = []
+  for nuNode in pt.nodes['NU']:
+    if not nuNode.parentTest(lambda node: node.ltype == "sumti6"):
+      sug.append({"range": [0, 1], # FIXME: this sucks.
+                  "mistake": "possibly accidental gadriless NU",
+                  "suggestion": "while it's possible to build tanru with NU elements inside, it's probable that you forgot to put a gadri (lo usually) before your NU."})
+
+  return sug
 
 ###############################################################################
 # checkers for unparsable text
@@ -257,13 +288,14 @@ def invalidCharsChecker(text):
 @utcheck
 def invalidHPlacement(text):
   sug = []
-  hs = findall(text, "'")
+  hs = findall(text, "'", [])
+  print hs
   for h in hs:
     if h == 0 or text[h-1] not in "aeiouy" or text[h+1] not in "aeiou":
       sug.append({"range": [h, h+1],
                   "mistake": "' in invalid position",
                   "suggestion": "The ' can only appear between vowels."})
-  
+
   return sug
 
 #
