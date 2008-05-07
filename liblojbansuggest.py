@@ -180,6 +180,8 @@ class unparsabletext:
     for ch in utcheckers:
       self.sug.extend(ch(self.td))
 
+    print "\n".join(str(a) for a in self.sug)
+
   def __str__(self):
     return "Unparsable Text: %s" % self.td
 
@@ -219,6 +221,28 @@ def forgotCuChecker(text, pt):
 ###############################################################################
 # checkers for unparsable text
 #
+
+@utcheck
+def invalidCharsChecker(text):
+  sug = []
+  text = text.lower()
+  print text
+  if "h" in text:
+    sug.append({"range": [text.find("h"), text.find("h") + 1],
+                "mistake": "invalid character",
+                "suggestion": "There is no h in the lojbanic alphabet! Use the character ' instead."})
+  
+  if "q" in text:
+    sug.append({"range": [text.find("q"), text.find("q") + 1],
+                "mistake": "invalid character",
+                "suggestion": "There is no q in the lojbanic alphabet! Usually you can use k instead."})
+
+  if "w" in text:
+    sug.append({"range": [text.find("q"), text.find("q") + 1],
+                "mistake": "invalid character",
+                "suggestion": "There is no w in the lojbanic alphabet! Usually you can use a diphtong with u or a v instead."})
+
+  return sug
 
 #
 # end of checkers
