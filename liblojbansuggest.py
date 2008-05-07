@@ -9,7 +9,7 @@ def findall(string, sub, listindex = [], offset = 0):
     offset = string.index(sub)+offset
     listindex.append(offset)
     string = string[(string.index(sub)+1):]
-    return allindices(string, sub, listindex, offset+1)
+    return findall(string, sub, listindex, offset+1)
 
 class lojbanNode:
   def __init__(self, ltype):
