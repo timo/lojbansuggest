@@ -283,7 +283,6 @@ def dotSideCmevlaChecker(text, pt):
 def invalidCharsChecker(text):
   sug = []
   text = text.lower()
-  print text
   if "h" in text:
     sug.append({"range": [text.find("h"), text.find("h") + 1],
                 "mistake": "invalid character",
@@ -312,6 +311,31 @@ def invalidHPlacementChecker(text):
                   "mistake": "' in invalid position",
                   "suggestion": "The ' can only appear between vowels."})
 
+  return sug
+
+@utcheck
+def baiMissingGadriChecker(text):
+  sug = []
+  # ki'u du'u is invalid, as is 
+  allbai = "ba'i bai bau be'i ca'i cau ci'e ci'o ci'u cu'u de'i di'o do'e du'i du'o fa'e fau fi'e ga'a gau ja'e ja'i ji'e ji'o ji'u ka'a ka'i kai ki'i ki'u koi ku'u la'u le'a li'e ma'e ma'i mau me'a me'e mu'i mu'u ni'i pa'a pa'u pi'o po'i pu'a pu'e ra'a ra'i rai ri'a ri'i sau si'u ta'i tai ti'i ti'u tu'i va'o va'u zau zu'e".split()
+  allgadri = [a + " " for a in "le le'e le'i lei lo lo'e lo'i loi".split()]
+  
+  # TODO: Find out if all those test cases are really necessary, or if they
+  #       would fail for text that parses anyway (what if there are other 
+  #       mistakes in the sentence?
+  for bai in allbai:
+    if bai in text:
+      allpos = findall(text, bai, [], 0)
+      for pos in allpos:
+        print "checking %s at %s" % (bai, pos)
+        if text[pos - 1] == " " or text[pos - 2:pos] in "se te ve xe" or text[pos - 4:pos].endswith("jai"):
+          if text[pos + len(bai)] == " ":
+            if True not in [text[pos + len(bai):pos + len(bai) + 4].startswith(gadri) for gadri in allgadri]:
+              sug.append({"range": [pos, pos + len(bai) + 4],
+                          "mistake": "apparently used a BAI without a sumti",
+                          "suggestion": "add a lo or le after %s; BAI are sumtcita, so they need to be followed by a sumti." % bai})
+        else:
+          print "'%s', '%s'" % (text[pos - 1], text[pos - 2:pos])
   return sug
 
 #
