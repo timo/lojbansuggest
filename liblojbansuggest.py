@@ -130,16 +130,22 @@ class parseTree:
 def find_camxes():
   return os.path.expanduser("~/lojban/lojban_peg_parser.jar")
 
-def call_camxes(text, arguments=[]):
-  camxesPath = find_camxes()
-  sp = subprocess.Popen(["java", "-jar", camxesPath] + arguments,
-                        stdin = subprocess.PIPE, stdout=subprocess.PIPE)
+camxesinstances = {}
+
+def call_camxes(text, arguments=()):
+  arguments = tuple(arguments)
+  if arguments in camxesinstances:
+    sp = camxesinstances[arguments]
+  else:
+    camxesPath = find_camxes()
+    sp = subprocess.Popen(["java", "-jar", camxesPath] + list(arguments),
+                          stdin = subprocess.PIPE, stdout=subprocess.PIPE)
+    # eat the "hello" line for each of the arguments
+    for arg in arguments:
+      a = sp.stdout.readline()
   sp.stdin.write(text)
   sp.stdin.write("\n")
-  sp.stdin.close()
-  a = sp.stdout.readlines()
-  sp.stdout.close()
-  os.kill(sp.pid, signal.SIGTERM)
+  a = sp.stdout.readline()
   return a
 
 class lojbantext:
@@ -171,7 +177,7 @@ class lojbantext:
 
     # 3. see what can be parsed (camxes -t)
     for sent in self.sent:
-      if call_camxes(sent, ["-t"])[1].strip() == sent:
+      if call_camxes(sent, ["-t"]).strip() == sent:
         self.items.append(lojbansentence(sent))
       else:
         self.items.append(unparsabletext(sent))
@@ -182,7 +188,7 @@ class lojbansentence:
   def __init__(self, textdata):
     self.td = textdata
     # 1. run camxes to get a parse tree
-    self.pt = call_camxes(textdata, ["-f"])[1].strip()
+    self.pt = call_camxes(textdata, ["-f"]).strip()
 
     self.pt = parseTree(self.pt)
 
