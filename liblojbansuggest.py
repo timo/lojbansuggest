@@ -177,7 +177,7 @@ class lojbantext:
 
     # 3. see what can be parsed (camxes -t)
     for sent in self.sent:
-      if call_camxes(sent, ["-t"]).strip() == sent:
+      if call_camxes(sent, ["-t"]).strip() == sent.strip():
         self.items.append(lojbansentence(sent))
       else:
         self.items.append(unparsabletext(sent))
@@ -349,11 +349,12 @@ def baiMissingGadriChecker(text):
 ###############################################################################
 
 def analyze(text):
-  pass
+  lto = lojbantext(text)
+
   # return a list of suggestions or something?!
 
 def main():
-  text = sys.stdin.readlines()
+  text = " ".join(sys.stdin.readlines())
   analyze(text)
 
 print "Available checkers:"
