@@ -143,6 +143,7 @@ def call_camxes(text, arguments=()):
     # eat the "hello" line for each of the arguments
     for arg in arguments:
       a = sp.stdout.readline()
+    camxesinstances[arguments] = sp
   sp.stdin.write(text)
   sp.stdin.write("\n")
   a = sp.stdout.readline()
