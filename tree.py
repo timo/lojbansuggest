@@ -19,16 +19,18 @@ def parseTree(text):
   return stack
 
 def sameGroup(a, b, recurse = True):
-  print "same?", a, b
+  if isinstance(a, list): a = a[0]
   # check for gismu, gismu1, gismu2, ...
   if b.startswith(a[:-1]) or (b[-1] == "1" and b[:-1] == a) and b[-1].isalnum():
     return True
+  # stack together I and IPre or IClause and IPre for example
+  if b.endswith("Pre"):
+    if a.startswith(b[:-3]):
+      return True
   if recurse and sameGroup(b, a, False):
     return True
 
 def simplify(part):
-  print "simplifying:"
-  pprint(part)
   # only simplify nodes that have one child only
   if len(part) == 2:
     # do not try to simplify string leafs
@@ -36,7 +38,6 @@ def simplify(part):
       # only simplify nodes of the same group (like sumti with sumti1, sumti2, ...)
       if sameGroup(part[0], part[1][0]):
         if len(part[1]) > 1:
-          print "eliding a", part[1][0]
           return simplify([part[0], simplify(part[1][1])])
   # let's try that again with the children.
   if len(part) == 1:
@@ -67,5 +68,4 @@ while True:
   i = raw_input()
   t = parseTree(i)
   s = simplify(t)
-  print t
-  print s
+  pprint(s)
