@@ -20,26 +20,28 @@ def parseTree(text):
 
 def sameGroup(a, b, recurse = True):
   print "same?", a, b
-  if recurse and sameGroup(b, a, False):
-    return True
   # check for gismu, gismu1, gismu2, ...
-  if b.startswith(a[:-1]) or (b[-1] == "1" and b[:-1] == a):
+  if b.startswith(a[:-1]) or (b[-1] == "1" and b[:-1] == a) and b[-1].isalnum():
+    return True
+  if recurse and sameGroup(b, a, False):
     return True
 
 def simplify(part):
+  print "simplifying:"
   pprint(part)
   # only simplify nodes that have one child only
   if len(part) == 2:
     # do not try to simplify string leafs
     if isinstance(part[1][0], str):
       # only simplify nodes of the same group (like sumti with sumti1, sumti2, ...)
-      if sameGroup(part[0][0], part[1][0]):
-        return [part[0], simplify(part[1][1])]
+      if sameGroup(part[0], part[1][0]):
+        if len(part[1]) > 1:
+          print "eliding a", part[1][0]
+          return simplify([part[0], simplify(part[1][1])])
   # let's try that again with the children.
   if len(part) == 1:
     return part
-  return [part[0], simplify(part[1])]
-  
+  return [part[0]] + [simplify(p) for p in part[1:]]
 
 class lojbanNode(object):
   def __init__(self, typ, children):
