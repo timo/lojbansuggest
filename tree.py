@@ -5,18 +5,19 @@ from pprint import pprint
 def parseTree(text):
   stack = [[]]
   for c in text.split(" "):
-    if c == "":
-      pass
-    elif c[-1] == "(":
+    if c == "": # whitespace are irrelevant
+      continue
+    elif c[-1] == "(": # opened a new construct
       stack[-1].append(c[:-1])
       stack.append([])
-    elif c[0] == '"' and c[-1] == '"':
+    elif c[0] == '"' and c[-1] == '"': # add a string leaf
       stack[-1].append(c[1:-1])
-    elif c[0] == ")":
+    elif c[0] == ")": # close a construct
       stack[-2].append(stack.pop())
-      if c == "),":
+      if c == "),": # append a new argument
+        stack[-2].append(stack.pop())
         stack.append([])
-  return stack
+  return stack[0]
 
 def sameGroup(a, b, recurse = True):
   if isinstance(a, list): a = a[0]
@@ -37,10 +38,10 @@ def simplify(part):
     if isinstance(part[1][0], str):
       # only simplify nodes of the same group (like sumti with sumti1, sumti2, ...)
       if sameGroup(part[0], part[1][0]):
-        if len(part[1]) > 1:
+        if len(part[1]) == 2:
           return simplify([part[0], simplify(part[1][1])])
   # let's try that again with the children.
-  if len(part) == 1:
+  elif len(part) == 1:
     return part
   return [part[0]] + [simplify(p) for p in part[1:]]
 
