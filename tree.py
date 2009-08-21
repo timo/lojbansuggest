@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from liblojbansuggest import *
 from pprint import pprint
+from camxes import call_camxes
 
 def parseTree(text):
   stack = [[]]
@@ -67,6 +68,7 @@ class Sentence(TreeBase):
 
 while True:
   i = raw_input()
-  t = parseTree(i)
+  ct = call_camxes(i, ["-e"])
+  t = parseTree(ct)
   s = simplify(t)
   pprint(s)
