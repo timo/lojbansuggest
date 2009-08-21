@@ -33,6 +33,11 @@ def sameGroup(a, b, recurse = True):
     return True
 
 def simplify(part):
+  # try to simplify [fooclause [cmavo [foo ['foo'] ] ] ] to [foo ['foo'] ]
+  try:
+    if part[1][0] == "CMAVO" and part[0].endswith("Clause") and part[0].startswith(part[1][1][0]):
+      return [part[0][:-len("Clause")], [part[1][1][1][0]]]
+  except IndexError: pass
   # only simplify nodes that have one child only
   if len(part) > 1:
     res = []
