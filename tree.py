@@ -6,6 +6,14 @@ from camxes import call_camxes
 class LojbansuggestError(Exception): pass
 class MalformedTreeError(LojbansuggestError): pass
 
+def leafTip(branch):
+  if len(branch) > 2:
+    raise MalformedTreeError("Tried to get the tip of a branch.")
+  if len(branch) == 1:
+    return branch[0]
+  else:
+    return leafTip(branch[1])
+
 def parseTree(text):
   stack = [[]]
   for c in text.split(" "):
@@ -43,7 +51,6 @@ def sameGroup(a, b, recurse = True):
 
 simpleMap = {'tailTerms': 'terms',
              'statement': 'sentence'}
-@noEmptyResult
 def simpleName(name):
   try: return simpleMap[name]
   except: pass
@@ -53,7 +60,6 @@ def simpleName(name):
     return name[:-len("Clause")]
   return name
 
-@noEmptyResult
 def simplify(part):
   # try to simplify [fooclause [cmavo [foo ['foo'] ] ] ] to [foo ['foo'] ]
   try:
@@ -81,22 +87,27 @@ def simplify(part):
     return part
   return [part[0]] + [simplify(p) for p in part[1:]]
 
-class lojbanNode(object):
-  def __init__(self, typ, children):
-    self.t = typ
-    self.ch = children
-
 class CmavoSumti(object):
   def __init__(self, cmavo):
     self.cmavo = cmavo
 
-  def __str__(self):
+  def __repr__(self):
     return self.cmavo
 
 class Sentence(object):
   def __init__(self, selbri, sumti):
-    selbri = selbri
-    sumti = {}
+    self.selbri = selbri
+    self.sumti = sumti
+
+  def __repr__(self):
+    return "Sentence with selbri {" + `self.selbri` + "} and sumti " + `self.sumti`
+
+class Selbri(object):
+  def __init__(self, selbri):
+    self.selbri = selbri # TODO: come up with stuff for this class
+
+  def __repr__(self):
+    return self.selbri
 
 def sumtiFromTerms(tree):
   sumti = []
@@ -107,10 +118,28 @@ def sumtiFromTerms(tree):
       sumti.append(CmavoSumti(part[1][1][0]))
   return sumti
 
+def sumtiFromBridiTail(tree):
+  # we expect one terms somewhere in there.
+  for tu in tree[1:]:
+    if tu[0] == "terms":
+      return sumtiFromTerms(tu)
+  # apparently there were none.
+  return []
+
+def selbriFromBridiTail(tree):
+  # we expect one selbri with or more tanruUnit -> BRIVLA -> gismu -> "gismu".
+  res = []
+  for sl in tree[1:]:
+    if sl[0] == "selbri":
+      for tu in sl[1:]:
+        res.append(leafTip(tu))
+  return Selbri(" ".join(res)) # this should be have a more meaningful analysis at base.
+
 # we may get a terms and then a bridiTail.
 def makeSentence(tree):
   sumti = {}
   sumtiCounter = 1
+  selbri = None
   print "tree:", tree
   for part in tree[1:]:
     if part[0] not in ("bridiTail", 'terms'): raise MalformedTreeError("Expected a bridiTail or terms, but got a " + part[0])
@@ -120,8 +149,13 @@ def makeSentence(tree):
         sumti[sumtiCounter] = nsumti
         sumtiCounter += 1
     elif part[0] == 'bridiTail': 
-      pass
-      
+      newSumti = sumtiFromBridiTail(part)
+      for nsumti in newSumti:
+        sumti[sumtiCounter] = nsumti
+        sumtiCounter += 1
+      selbri = selbriFromBridiTail(part)
+  return Sentence(selbri, sumti)
+
 # we expect a text node with either one paragraphs child or
 # one or more of i or ni'o and then a paragraphs child.
 def makeText(tree):
@@ -140,3 +174,4 @@ while True:
   s = simplify(t)
   pprint(s)
   a = makeText(s)
+  pprint(a)
