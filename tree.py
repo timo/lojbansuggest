@@ -34,13 +34,21 @@ def sameGroup(a, b, recurse = True):
 
 def simplify(part):
   # only simplify nodes that have one child only
-  if len(part) == 2:
-    # do not try to simplify string leafs
-    if isinstance(part[1][0], str):
-      # only simplify nodes of the same group (like sumti with sumti1, sumti2, ...)
-      if sameGroup(part[0], part[1][0]):
-        if len(part[1]) == 2:
-          return simplify([part[0], simplify(part[1][1])])
+  if len(part) > 1:
+    res = []
+    fadni = True
+    for sp in part[1:]:
+      # do not try to simplify string leafs
+      if isinstance(sp[0], str):
+        # only simplify nodes of the same group (like sumti with sumti1, sumti2, ...)
+        if sameGroup(part[0], sp[0]):
+          if len(sp) > 1:
+            res.extend([simplify(a) for a in sp[1:]])
+            fadni = False
+            continue
+      res.append(sp)
+    if not fadni:
+      return simplify([part[0]] + res)
   # let's try that again with the children.
   elif len(part) == 1:
     return part
