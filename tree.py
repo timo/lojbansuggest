@@ -92,7 +92,7 @@ class CmavoSumti(object):
     self.cmavo = cmavo
 
   def __repr__(self):
-    return self.cmavo
+    return "CmavoSumti(" + `self.cmavo` + ")"
 
 class SelbriSumti(object):
   def __init__(self, gadri, selbri):
@@ -100,7 +100,7 @@ class SelbriSumti(object):
     self.selbri = selbri
   
   def __repr__(self):
-    return `self.gadri` + " " + `self.selbri`
+    return "SelbriSumti(" + `self.gadri` + ", " + `self.selbri` + ")"
 
 class Sentence(object):
   def __init__(self, selbri, sumti):
@@ -108,14 +108,29 @@ class Sentence(object):
     self.sumti = sumti
 
   def __repr__(self):
-    return "Sentence with selbri {" + `self.selbri` + "} and sumti " + `self.sumti`
+    return "Sentence(" + `self.selbri` + ")," + `self.sumti` + ")"
 
 class Selbri(object):
-  def __init__(self, selbri):
-    self.selbri = selbri # TODO: come up with stuff for this class
+  def __init__(self, tanruUnits):
+    self.tanruUnits = tanruUnits
 
   def __repr__(self):
-    return self.selbri
+    return "Selbri(" + `self.tanruUnits` + ")"
+
+class tanruUnit(object):
+  def __init__(self, brivla):
+    self.brivla = brivla
+  
+  def __repr__(self):
+    return "tanruUnit(" + `self.brivla` + ")"
+
+class SubsentenceTanruUnit(object):
+  def __init__(self, abstractor, sentence):
+    self.abstractor = abstractor
+    self.sentence = sentence
+
+  def __repr__(self):
+    return "SubsentenceTanruUnit(" + `self.abstractor` + ", " + `self.sentence` + ")"
 
 def sumtiFromTerms(tree):
   sumti = []
