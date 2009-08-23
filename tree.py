@@ -87,7 +87,9 @@ def simplify(part):
     return part
   return [part[0]] + [simplify(p) for p in part[1:]]
 
-class CmeneSumti(object):
+class Sumti(object): pass
+
+class CmeneSumti(Sumti):
   def __init__(self, gadri, cmene):
     self.gadri = gadri
     self.cmene = cmene
@@ -95,14 +97,14 @@ class CmeneSumti(object):
   def __repr__(self):
     return "CmeneSumti(" + `self.gadri` + ", " + `self.cmene` + ")"
 
-class CmavoSumti(object):
+class CmavoSumti(Sumti):
   def __init__(self, cmavo):
     self.cmavo = cmavo
 
   def __repr__(self):
     return "CmavoSumti(" + `self.cmavo` + ")"
 
-class SelbriSumti(object):
+class SelbriSumti(Sumti):
   def __init__(self, gadri, selbri):
     self.gadri = gadri
     self.selbri = selbri
@@ -132,7 +134,7 @@ class tanruUnit(object):
   def __repr__(self):
     return "tanruUnit(" + `self.brivla` + ")"
 
-class SubsentenceTanruUnit(object):
+class SubsentenceTanruUnit(tanruUnit):
   def __init__(self, abstractor, sentence):
     self.abstractor = abstractor
     self.sentence = sentence
