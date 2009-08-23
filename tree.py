@@ -87,6 +87,38 @@ def simplify(part):
     return part
   return [part[0]] + [simplify(p) for p in part[1:]]
 
+class SumtiPositionHint(object): pass
+
+class NextPositionHint(SumtiPositionHint): # take the next free sumti spot
+  def __init__(self, prev = None):
+    if prev: self.counter = prev.next()
+    else: self.counter = 0
+
+  def next(self):
+    self.counter += 1
+    return self.counter - 1
+
+class FAPositionHint(SumtiPositionHint): 
+  def __init__(self, pos, prev): 
+    self.counter = pos # use a tagged position
+
+class BAIPositionHint(SumtiPositionHint): 
+  def __init__(self, bai, pos, prev): 
+    self.bai = bai;
+    self.pos = pos # use a bai-tagged position
+    self.prev = prev
+    self.exhausted = False
+  
+  def next(self):
+    if not self.exhausted:
+      self.exhausted = True
+      return (self.bai, self.pos)
+    else:
+      return self.prev.next()
+
+class BEPositionHint(BAIPositionHint): pass # this is a special case of a baitag, because we can just take the bai to be the tanru element.
+class COPositionHint(BEPositionHint): pass # this is an even more special case.
+
 class Sumti(object): pass
 
 class CmeneSumti(Sumti):
@@ -146,16 +178,19 @@ def sumtiFromTerms(tree):
   sumti = []
   if tree[0] != "terms": raise MalformedTreeError("Expected terms as root node, but got " + tree[0])
   for part in tree[1:]:
-    if part[0] != "sumti": raise MalformedTreeError("Expected sumti, but got " + part[0])
-    if part[1][0] == "KOhA":
-      sumti.append(CmavoSumti(part[1][1][0]))
-    if part[1][0] == "LE":
-      sumti.append(SelbriSumti(part[1][1][0], makeSelbri(part[2])))
-    if part[1][0] == "LA":
-      if part[2][0] == "CMENE":
-        sumti.append(CmeneSumti(part[1][1][0], [leafTip(l) for l in part[1][1:]]))
-      elif part[2][0] == "selbri":
-        sumti.append(CmeneSumti(part[1][1][0], [makeSelbri(part[2])]))
+    if part[0] not in ("sumti", "FA", "tag"): raise MalformedTreeError("Expected sumti, FA or tag, but got " + part[0])
+    if part[0] == "sumti":
+      if part[1][0] == "KOhA":
+        sumti.append(CmavoSumti(part[1][1][0]))
+      if part[1][0] == "LE":
+        sumti.append(SelbriSumti(part[1][1][0], makeSelbri(part[2])))
+      if part[1][0] == "LA":
+        if part[2][0] == "CMENE":
+          sumti.append(CmeneSumti(part[1][1][0], [leafTip(l) for l in part[1][1:]]))
+        elif part[2][0] == "selbri":
+          sumti.append(CmeneSumti(part[1][1][0], [makeSelbri(part[2])]))
+    else:
+      
   return sumti
 
 def sumtiFromBridiTail(tree):
@@ -216,7 +251,7 @@ def makeText(tree):
   if tree[0] != "text": raise MalformedTreeError("Expected 'text' as base node.")
   for block in tree[-1]: # ignore all the stuff up front
     if block[0] in ["I", "NIhO"]: continue # TODO: come up with a solution for nihos and is.
-    if block[0] == "sentence":
+    elif block[0] == "sentence":
       res.append(makeSentence(block))
   return res
 
