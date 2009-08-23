@@ -140,8 +140,7 @@ def sumtiFromTerms(tree):
     if part[1][0] == "KOhA":
       sumti.append(CmavoSumti(part[1][1][0]))
     if part[1][0] == "LE":
-      pprint(part)
-      #sumti.append(SelbriSumti(
+      sumti.append(SelbriSumti(part[1][1][0], makeSelbri(part[2])))
   return sumti
 
 def sumtiFromBridiTail(tree):
@@ -152,14 +151,26 @@ def sumtiFromBridiTail(tree):
   # apparently there were none.
   return []
 
-def selbriFromBridiTail(tree):
+def makeTanruUnit(tree):
+  fss = [sp for sp in tree[1:] if sp[0] == "subsentence"]
+  if fss:
+    return SubsentenceTanruUnit(sp[1][1][0], makeSentence(fss[0][1]))
+  return tanruUnit(leafTip(tree))
+
+def makeSelbri(tree):
   # we expect one selbri with or more tanruUnit -> BRIVLA -> gismu -> "gismu".
   res = []
-  for sl in tree[1:]:
-    if sl[0] == "selbri":
-      for tu in sl[1:]:
-        res.append(leafTip(tu))
-  return Selbri(" ".join(res)) # this should be have a more meaningful analysis at base.
+  if tree[0] != "selbri": raise MalformedTreeError("Expected a selbri, got a " + tree[0])
+  for tu in tree[1:]:
+    res.append(makeTanruUnit(tu))
+  return Selbri(res) # this should be have a more meaningful analysis at base.
+
+def selbriFromBridiTail(tree):
+  if tree[0] != "bridiTail": raise MalformedTreeError("Expected a bridiTail, got a " + tree[0])
+  for ch in tree[1:]:
+    if ch[0] == "selbri":
+      return makeSelbri(ch)
+  raise MalformedTreeError("A briditail had no selbri. wtf?")
 
 # we may get a terms and then a bridiTail.
 def makeSentence(tree):
@@ -180,7 +191,7 @@ def makeSentence(tree):
         sumti[sumtiCounter] = nsumti
         sumtiCounter += 1
       
-      selbri = makeSelbri(part)
+      selbri = selbriFromBridiTail(part)
   return Sentence(selbri, sumti)
 
 # we expect a text node with either one paragraphs child or
