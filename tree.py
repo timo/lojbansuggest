@@ -169,8 +169,8 @@ def sumtiFromBridiTail(tree):
 def makeTanruUnit(tree):
   fss = [sp for sp in tree[1:] if sp[0] == "subsentence"]
   if fss:
-    return SubsentenceTanruUnit(sp[1][1][0], makeSentence(fss[0][1]))
-  return tanruUnit(leafTip(tree))
+    return SubsentenceTanruUnit(tree[1][1][0], makeSentence(fss[0][1])) # FIXME: breaks with SE + NU
+  return tanruUnit(" ".join(leafTip(tp) for tp in tree[1:])) # FIXME: come up with something clever for SE here as well.
 
 def makeSelbri(tree):
   # we expect one selbri with or more tanruUnit -> BRIVLA -> gismu -> "gismu".
