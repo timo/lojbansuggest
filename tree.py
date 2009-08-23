@@ -94,6 +94,14 @@ class CmavoSumti(object):
   def __repr__(self):
     return self.cmavo
 
+class SelbriSumti(object):
+  def __init__(self, gadri, selbri):
+    self.gadri = gadri
+    self.selbri = selbri
+  
+  def __repr__(self):
+    return `self.gadri` + " " + `self.selbri`
+
 class Sentence(object):
   def __init__(self, selbri, sumti):
     self.selbri = selbri
@@ -116,6 +124,9 @@ def sumtiFromTerms(tree):
     if part[0] != "sumti": raise MalformedTreeError("Expected sumti, but got " + part[0])
     if part[1][0] == "KOhA":
       sumti.append(CmavoSumti(part[1][1][0]))
+    if part[1][0] == "LE":
+      pprint(part)
+      #sumti.append(SelbriSumti(
   return sumti
 
 def sumtiFromBridiTail(tree):
@@ -142,7 +153,7 @@ def makeSentence(tree):
   selbri = None
   print "tree:", tree
   for part in tree[1:]:
-    if part[0] not in ("bridiTail", 'terms'): raise MalformedTreeError("Expected a bridiTail or terms, but got a " + part[0])
+    if part[0] not in ("bridiTail", 'terms'): continue
     if part[0] == 'terms':
       newSumti = sumtiFromTerms(part)
       for nsumti in newSumti:
@@ -153,7 +164,8 @@ def makeSentence(tree):
       for nsumti in newSumti:
         sumti[sumtiCounter] = nsumti
         sumtiCounter += 1
-      selbri = selbriFromBridiTail(part)
+      
+      selbri = makeSelbri(part)
   return Sentence(selbri, sumti)
 
 # we expect a text node with either one paragraphs child or
