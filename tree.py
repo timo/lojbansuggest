@@ -87,6 +87,14 @@ def simplify(part):
     return part
   return [part[0]] + [simplify(p) for p in part[1:]]
 
+class CmeneSumti(object):
+  def __init__(self, gadri, cmene):
+    self.gadri = gadri
+    self.cmene = cmene
+
+  def __repr__(self):
+    return "CmeneSumti(" + `self.gadri` + ", " + `self.cmene` + ")"
+
 class CmavoSumti(object):
   def __init__(self, cmavo):
     self.cmavo = cmavo
@@ -141,6 +149,11 @@ def sumtiFromTerms(tree):
       sumti.append(CmavoSumti(part[1][1][0]))
     if part[1][0] == "LE":
       sumti.append(SelbriSumti(part[1][1][0], makeSelbri(part[2])))
+    if part[1][0] == "LA":
+      if part[2][0] == "CMENE":
+        sumti.append(CmeneSumti(part[1][1][0], [leafTip(l) for l in part[1][1:]]))
+      elif part[2][0] == "selbri":
+        sumti.append(CmeneSumti(part[1][1][0], [makeSelbri(part[2])]))
   return sumti
 
 def sumtiFromBridiTail(tree):
