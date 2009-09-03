@@ -90,26 +90,30 @@ def simplify(part):
     return part
   return [part[0]] + [simplify(p) for p in part[1:]]
 
-class SumtiPositionHint(object): pass
+class SumtiPositionHint(object):
+  def hookUp(self, prev):
+    self.prev = prev
+    return self
 
 class NextPositionHint(SumtiPositionHint): # take the next free sumti spot
-  def __init__(self, prev = None):
-    if prev: self.counter = prev.next()
-    else: self.counter = 0
+  def hookUp(self, prev):
+    self.counter = prev.next()
+    return self
 
   def next(self):
     self.counter += 1
     return self.counter - 1
 
-class FAPositionHint(SumtiPositionHint): 
-  def __init__(self, pos, prev): 
+class FAPositionHint(NextPositionHint): 
+  def __init__(self, pos): 
     self.counter = pos # use a tagged position
 
+  def hookUp(self, prev): return self
+
 class BAIPositionHint(SumtiPositionHint): 
-  def __init__(self, bai, pos, prev): 
-    self.bai = bai;
+  def __init__(self, bai, pos): 
+    self.bai = bai
     self.pos = pos # use a bai-tagged position
-    self.prev = prev
     self.exhausted = False
   
   def next(self):
@@ -118,6 +122,21 @@ class BAIPositionHint(SumtiPositionHint):
       return (self.bai, self.pos)
     else:
       return self.prev.next()
+
+class InitialPositionHint(SumtiPositionHint):
+  def __init__(self):
+    self.exhausted = False
+
+  def next(self):
+    if not self.exhausted:
+      self.exhausted = True
+      return 1
+    else:
+      return self.prev.next()
+
+class SamePositionHint(InitialPositionHint):
+  def __init__(self):
+    self.exhausted = True
 
 class BEPositionHint(BAIPositionHint): pass # this is a special case of a baitag, because we can just take the bai to be the tanru element.
 class COPositionHint(BEPositionHint): pass # this is an even more special case.
@@ -129,6 +148,10 @@ def applySe(SE, nums):
     if i == 0: pass # jai comes much later.
     else:
       nums = nums[i] + nums[0:i] + nums[i + 1:]
+
+allFA = "y fa fe fi fo fu fai".split()
+def posOfFA(fa):
+  return allFA.index(fa)
 
 class Sumti(object): pass
 
@@ -187,21 +210,24 @@ class SubsentenceTanruUnit(tanruUnit):
 
 def sumtiFromTerms(tree):
   sumti = []
+  hint = SamePositionHint() # use whatever came before.
+  def addSumti(sum):
+    sumti.append((hint, sum))
   if tree[0] != "terms": raise MalformedTreeError("Expected terms as root node, but got " + tree[0])
   for part in tree[1:]:
     if part[0] not in ("sumti", "FA", "tag"): raise MalformedTreeError("Expected sumti, FA or tag, but got " + part[0])
     if part[0] == "sumti":
       if part[1][0] == "KOhA":
-        sumti.append(CmavoSumti(part[1][1][0]))
+        addSumti(CmavoSumti(part[1][1][0]))
       if part[1][0] == "LE":
-        sumti.append(SelbriSumti(part[1][1][0], makeSelbri(part[2])))
+        addSumti(SelbriSumti(part[1][1][0], makeSelbri(part[2])))
       if part[1][0] == "LA":
         if part[2][0] == "CMENE":
-          sumti.append(CmeneSumti(part[1][1][0], " ".join([leafTip(l) for l in part[2:]])))
+          addSumti(CmeneSumti(part[1][1][0], " ".join([leafTip(l) for l in part[2:]])))
         elif part[2][0] == "selbri":
-          sumti.append(CmeneSumti(part[1][1][0], [makeSelbri(part[2])]))
-    else:
-      pass # TODO: handle tags here
+          addSumti(CmeneSumti(part[1][1][0], [makeSelbri(part[2])]))
+    elif part[0] == "FA":
+      hint = FAPositionHint(posOfFA(part[1][0]))
   return sumti
 
 def sumtiFromBridiTail(tree):
@@ -242,23 +268,20 @@ def selbriFromBridiTail(tree):
 # we may get a terms and then a bridiTail.
 def makeSentence(tree):
   sumti = {}
-  sumtiCounter = 1
+  sumtiCounter = InitialPositionHint()
   selbri = None
   print "tree:", tree
   for part in tree[1:]:
     if part[0] not in ("bridiTail", 'terms'): continue
-    if part[0] == 'terms':
-      newSumti = sumtiFromTerms(part)
+    if part[0] in ['terms', 'bridiTail']:
+      if part[0] == 'terms':
+        newSumti = sumtiFromTerms(part)
+      elif part[0] == 'bridiTail': 
+        newSumti = sumtiFromBridiTail(part)
+        selbri = selbriFromBridiTail(part)
       for nsumti in newSumti:
-        sumti[sumtiCounter] = nsumti
-        sumtiCounter += 1
-    elif part[0] == 'bridiTail': 
-      newSumti = sumtiFromBridiTail(part)
-      for nsumti in newSumti:
-        sumti[sumtiCounter] = nsumti
-        sumtiCounter += 1
-      
-      selbri = selbriFromBridiTail(part)
+        sumtiCounter = nsumti[0].hookUp(sumtiCounter)
+        sumti[sumtiCounter.next()] = nsumti[1]
   return Sentence(selbri, sumti)
 
 # we expect a text node with either one paragraphs child or
