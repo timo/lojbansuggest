@@ -197,11 +197,11 @@ def sumtiFromTerms(tree):
         sumti.append(SelbriSumti(part[1][1][0], makeSelbri(part[2])))
       if part[1][0] == "LA":
         if part[2][0] == "CMENE":
-          sumti.append(CmeneSumti(part[1][1][0], [leafTip(l) for l in part[1][1:]]))
+          sumti.append(CmeneSumti(part[1][1][0], " ".join([leafTip(l) for l in part[2:]])))
         elif part[2][0] == "selbri":
           sumti.append(CmeneSumti(part[1][1][0], [makeSelbri(part[2])]))
     else:
-      
+      pass # TODO: handle tags here
   return sumti
 
 def sumtiFromBridiTail(tree):
