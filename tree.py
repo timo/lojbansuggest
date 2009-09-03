@@ -3,6 +3,7 @@
 from liblojbansuggest import *
 from pprint import pprint
 from camxes import call_camxes
+import readline
 
 # TODO: there needs to be some kind of intelligence for place structures somewhere…
 
