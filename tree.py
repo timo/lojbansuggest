@@ -1,7 +1,10 @@
 #!/usr/bin/env python
+# -*- coding=utf8 -*-
 from liblojbansuggest import *
 from pprint import pprint
 from camxes import call_camxes
+
+# TODO: there needs to be some kind of intelligence for place structures somewhere…
 
 class LojbansuggestError(Exception): pass
 class MalformedTreeError(LojbansuggestError): pass
@@ -119,6 +122,14 @@ class BAIPositionHint(SumtiPositionHint):
 class BEPositionHint(BAIPositionHint): pass # this is a special case of a baitag, because we can just take the bai to be the tanru element.
 class COPositionHint(BEPositionHint): pass # this is an even more special case.
 
+allSE = "jai se te ve xe".split()
+def applySe(SE, nums):
+  for se in SE:
+    i = allSE.index(se)
+    if i == 0: pass # jai comes much later.
+    else:
+      nums = nums[i] + nums[0:i] + nums[i + 1:]
+
 class Sumti(object): pass
 
 class CmeneSumti(Sumti):
@@ -204,8 +215,14 @@ def sumtiFromBridiTail(tree):
 def makeTanruUnit(tree):
   fss = [sp for sp in tree[1:] if sp[0] == "subsentence"]
   if fss:
-    return SubsentenceTanruUnit(tree[1][1][0], makeSentence(fss[0][1])) # FIXME: breaks with SE + NU
-  return tanruUnit(" ".join(leafTip(tp) for tp in tree[1:])) # FIXME: come up with something clever for SE here as well.
+    abs = ""
+    for part in tree[1:]:
+      if part[0] == "SE":
+        abs += part[1][0]
+      elif part[0] == "NU":
+        abs += part[1][0]
+    return SubsentenceTanruUnit(abs, makeSentence(fss[0][1]))
+  return tanruUnit(" ".join(leafTip(tp) for tp in tree[1:])) # come up with something clever for SE here as well
 
 def makeSelbri(tree):
   # we expect one selbri with or more tanruUnit -> BRIVLA -> gismu -> "gismu".
