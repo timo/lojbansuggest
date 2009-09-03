@@ -99,6 +99,7 @@ class SumtiPositionHint(object):
 class NextPositionHint(SumtiPositionHint): # take the next free sumti spot
   def hookUp(self, prev):
     self.counter = prev.next()
+    self.prev = prev
     return self
 
   def next(self):
@@ -124,21 +125,15 @@ class BAIPositionHint(SumtiPositionHint):
     else:
       return self.prev.next()
 
-class InitialPositionHint(SumtiPositionHint):
-  def __init__(self):
-    self.exhausted = False
+class InitialPositionHint(NextPositionHint):
+  def hookUp(self, prev):
+    self.counter = 1
+    return self
 
-  def next(self):
-    if not self.exhausted:
-      self.exhausted = True
-      return 1
-    else:
-      return self.prev.next()
-
-class SamePositionHint(InitialPositionHint):
-  def __init__(self):
-    self.exhausted = True
-
+class SamePositionHint(SumtiPositionHint):
+  def hookUp(self, prev):
+    return prev
+ 
 class BEPositionHint(BAIPositionHint): pass # this is a special case of a baitag, because we can just take the bai to be the tanru element.
 class COPositionHint(BEPositionHint): pass # this is an even more special case.
 
@@ -269,7 +264,7 @@ def selbriFromBridiTail(tree):
 # we may get a terms and then a bridiTail.
 def makeSentence(tree):
   sumti = {}
-  sumtiCounter = InitialPositionHint()
+  sumtiCounter = InitialPositionHint().hookUp(None) # this is ugly :|
   selbri = None
   print "tree:", tree
   for part in tree[1:]:
