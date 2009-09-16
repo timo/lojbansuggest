@@ -106,6 +106,7 @@ class NextPositionHint(SumtiPositionHint): # take the next free sumti spot
     self.counter += 1
     return self.counter - 1
 
+# FIXME: already filled places must be skipped (fe ti dunda fa mi do == mi ti do dunda)
 class FAPositionHint(NextPositionHint): 
   def __init__(self, pos): 
     self.counter = pos # use a tagged position
