@@ -335,13 +335,11 @@ def main():
   text = " ".join(sys.stdin.readlines())
   analyze(text)
 
-print "Available checkers:"
-print " - for valid sentences:"
-print "   -",
-print "\n   - ".join(a.__name__ for a in ltcheckers)
-print " - for invalid sentences:"
-print "   -",
-print "\n   - ".join(a.__name__ for a in utcheckers)
+print >> sys.stderr, """Available checkers:
+ - for valid sentences:
+   -""", "\n   - ".join(a.__name__ for a in ltcheckers), """
+ - for invalid sentences:
+   -""", "\n   - ".join(a.__name__ for a in utcheckers)
 
 if __name__ == "__main__":
   main()
