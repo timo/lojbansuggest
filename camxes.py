@@ -22,4 +22,5 @@ def call_camxes(text, arguments=()):
   sp.stdin.write(text)
   sp.stdin.write("\n")
   a = sp.stdout.readline()
+  newline = sp.stdout.readline()
   return a
