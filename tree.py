@@ -292,11 +292,12 @@ def makeText(tree):
       res.append(makeSentence(block))
   return res
 
-while True:
-  i = raw_input()
-  ct = call_camxes(i, ["-e"])
-  t = parseTree(ct)
-  s = simplify(t)
-  pprint(s)
-  a = makeText(s)
-  pprint(a)
+if __name__ == "__main__":
+  while True:
+    i = raw_input()
+    ct = call_camxes(i, ["-e"])
+    t = parseTree(ct)
+    s = simplify(t)
+    pprint(s)
+    a = makeText(s)
+    pprint(a)
