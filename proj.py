@@ -79,10 +79,8 @@ try:
                 fehp = Popen(["feh", "-FZ", tmpimgpath])
                 print "showed."
                 tmpfiles.append(tmpimgpath)
-except: pass
 finally:
     print "cleaning up"
     a.close()
     for tmpfile in tmpfiles:
         remove(tmpfile)
-    raise
