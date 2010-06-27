@@ -35,52 +35,73 @@ def makeConnections(head, tree, ind = "  "):
             ret += ind + head + " -> " + foo[0] + "\n"
             ret += "\n".join([makeConnections(foo[0], foo[1:], ind + "  ")])
         else:
-            ret += ind + head + " -> " + foo[0] + "\n" + ind + "  node " + foo[0] + " [color=\"red\"]\n"
+            #ret += ind + head + " -> " + foo[0] + "\n" + ind + "  node " + foo[0] + " [color=\"red\"]\n"
+            ret += ind + head + " -> " + foo[0] + " [color=\"red\"]\n"
     return ret
 
-a = socket(AF_INET, SOCK_STREAM)
-a.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-a.bind(("0.0.0.0", 1234))
-a.listen(10)
+def runserver():
+    a = socket(AF_INET, SOCK_STREAM)
+    a.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    a.bind(("0.0.0.0", 1234))
+    a.listen(10)
 
-clients = []
-tmpfiles = []
+    clients = []
+    tmpfiles = []
 
-fehp = None
+    fehp = None
 
-try:
-    while True:
-        (rsocks, wsocks, esocks) = select([a] + clients, [], [])
-        print "wait done. socks: ", rsocks
-        if a in rsocks:
-            (ns, foo) = a.accept()
-            ns.send("welcome. please type any lojban sentence.\n")
-            clients.append(ns)
-            print "accepted client ", foo
-        for rs in rsocks:
-            if rs is not a:
-                print "gotten something:"
-                text = rs.recv(1024)
-                print `text`
-                ct = call_camxes(text, ["-e"])
-                pprint(ct)
-                t = parseTree(ct)
-                s = simplify(t)
-                tmpimgfo, tmpimgpath = mkstemp(".png", "proj")
-                print "making image"
-                dotp = Popen(["dot", "-Tpng"], stdout = tmpimgfo, stdin=PIPE)
-                dotp.stdin.write(makeDot(mangleTree(s)))
-                dotp.stdin.close()
-                print "wait"
-                dotp.wait()
-                print "opening"
-                if fehp:
-                    kill(fehp.pid, SIGTERM)
-                fehp = Popen(["feh", "-FZ", tmpimgpath])
-                print "showed."
-                tmpfiles.append(tmpimgpath)
-finally:
-    print "cleaning up"
-    a.close()
-    for tmpfile in tmpfiles:
-        remove(tmpfile)
+    try:
+        while True:
+            (rsocks, wsocks, esocks) = select([a] + clients, [], [])
+            print "wait done. socks: ", rsocks
+            if a in rsocks:
+                (ns, foo) = a.accept()
+                ns.send("welcome. please type any lojban sentence.\n")
+                clients.append(ns)
+                print "accepted client ", foo
+            for rs in rsocks:
+                if rs is not a:
+                    print "gotten something:"
+                    text = rs.recv(1024)
+                    print `text`
+                    ct = call_camxes(text, ["-e"])
+                    pprint(ct)
+                    t = parseTree(ct)
+                    s = simplify(t)
+                    tmpimgfo, tmpimgpath = mkstemp(".png", "proj")
+                    print "making image"
+                    dotp = Popen(["dot", "-Tpng"], stdout = tmpimgfo, stdin=PIPE)
+                    dotp.stdin.write(makeDot(mangleTree(s)))
+                    dotp.stdin.close()
+                    print "wait"
+                    dotp.wait()
+                    print "opening"
+                    if fehp:
+                        kill(fehp.pid, SIGTERM)
+                    fehp = Popen(["feh", "-FZ", tmpimgpath])
+                    print "showed."
+                    tmpfiles.append(tmpimgpath)
+    finally:
+        print "cleaning up"
+        a.close()
+        for tmpfile in tmpfiles:
+            remove(tmpfile)
+
+
+def justmakeapic():
+    text = raw_input()
+    ct = call_camxes(text, ["-e"])
+    pprint(ct)
+    t = parseTree(ct)
+    s = simplify(t)
+    tmpimgfo, tmpimgpath = mkstemp(".png", "proj")
+    print "making image"
+    dotp = Popen(["dot", "-Tpng"], stdout = tmpimgfo, stdin=PIPE)
+    print makeDot(mangleTree(s))
+    dotp.stdin.write(makeDot(mangleTree(s)))
+    dotp.stdin.close()
+    print "wait"
+    dotp.wait()
+    print tmpimgpath
+
+justmakeapic()
