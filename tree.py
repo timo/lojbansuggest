@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding=utf8 -*-
-from liblojbansuggest import *
+from suggest import *
 from pprint import pprint
 from camxes import call_camxes
 import readline
