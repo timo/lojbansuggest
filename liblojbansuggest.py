@@ -290,7 +290,7 @@ def invalidHPlacementChecker(text):
   hs = findall(text, "'", [])
   print hs
   for h in hs:
-    if h == 0 or text[h-1] not in "aeiouy" or text[h+1] not in "aeiou":
+    if h == 0 or h >= len(text) - 1 or text[h-1] not in "aeiouy" or text[h+1] not in "aeiou":
       sug.append({"range": [h, h+1],
                   "mistake": "' in invalid position",
                   "suggestion": "The ' can only appear between vowels."})
