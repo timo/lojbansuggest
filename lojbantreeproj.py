@@ -1,6 +1,6 @@
 from socket import *
 from select import *
-from tree import *
+from lojbansuggest.tree import *
 from sys import stderr
 from pprint import pprint
 from subprocess import Popen, PIPE

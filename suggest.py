@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from lojbansuggest import lojbantext
+from lojbansuggest.suggest import lojbantext
 
 while True:
   lojbantext(raw_input("> "))
