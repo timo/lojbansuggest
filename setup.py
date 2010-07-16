@@ -1,3 +1,4 @@
+from textwrap import dedent
 from setuptools import setup
 
 setup(
@@ -23,4 +24,24 @@ setup(
             "Programming Language :: Python",
             "Topic :: Text Processing :: Linguistic",
         ],
+        long_description = dedent("""\
+            =============
+            Lojbansuggest
+            =============
+
+            This library is made up of two independent parts:
+
+            suggest
+            -------
+
+            This is a library and a thin commandline that takes a lojban sentence and looks for common beginner mistakes and makes suggestions for corrections.
+
+            tree
+            ----
+
+            This is a library to turn a lojban sentence into an approximate analysis of the semantics (for example what sumti goes into what place of what tanru unit).
+
+            At the moment it's not very powerful.""")
+
+
 )
