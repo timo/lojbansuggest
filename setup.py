@@ -8,9 +8,9 @@ setup(
         download_url = "http://wakelift.de/lojban/software/python/lojbansuggest-0.2.1.tar.gz",
         license = "BSD",
         install_requires = ["lojbantools"],
-        scripts = ["suggest.py",
+        scripts = ["scripts/%s" % filename for filename in ["suggest.py",
                    "showlojbantree.sh",
-                   "lojbantreeproj.py"],
+                   "lojbantreeproj.py"]],
         packages = ["lojbansuggest"],
         dependency_links = ["http://wakelift.de/lojban/software/"],
         

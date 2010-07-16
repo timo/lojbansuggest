@@ -104,4 +104,5 @@ def justmakeapic():
     dotp.wait()
     print tmpimgpath
 
-justmakeapic()
+if __name__ == "__main__":
+    justmakeapic()
