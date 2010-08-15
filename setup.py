@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
         name = "lojbansuggest",
-        version = "0.2.1",
+        version = "0.2.2",
         author = "Timo Paulssen",
         author_email = "timo+lojbansuggest@wakelift.de",
         download_url = "http://wakelift.de/lojban/software/python/lojbansuggest-0.2.1.tar.gz",
