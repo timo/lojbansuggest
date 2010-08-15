@@ -83,9 +83,10 @@ class parseTree:
                     for ch in n.children:
                         ch.parent = n
 
-                    remText = str(n)
-                    while "    " in text:
-                        text = text.replace("    ", " ")
+                    remText = str(node)
+                    print remText
+                    while "  " in text:
+                        text = text.replace("  ", " ")
                     text = (text[:text.find(remText)] + 
                            text[text.find(remText) + len(remText):])
 
