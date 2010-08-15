@@ -10,7 +10,7 @@ def findall(string, sub, listindex, offset = 0):
         string = string[(string.index(sub)+1):]
         return findall(string, sub, listindex, offset+1)
 
-class lojbanNode:
+class LojbanNode:
     def __init__(self, ltype):
         self.ltype = ltype
         self.children = []
@@ -19,9 +19,9 @@ class lojbanNode:
     def test(self, fun):
         return fun(self) + sum(bla.test(fun) for bla in self.children)
 
-    def parentTest(self, fun):
+    def parent_test(self, fun):
         if self.parent:
-            return fun(self) + self.parent.parentTest(fun)
+            return fun(self) + self.parent.parent_test(fun)
         else:
             return fun(self)
 
@@ -29,7 +29,7 @@ class lojbanNode:
         return "%s=( %s )" % (self.ltype, " ".join(str(child)
                                                    for child in self.children))
 
-class textNode:
+class TextNode:
     def __init__(self, text):
         self.ltype = "text"
         self.text = text
@@ -38,9 +38,9 @@ class textNode:
     def test(self, fun):
         return fun(self)
 
-    def parentText(self, fun):
+    def parent_text(self, fun):
         if self.parent:
-            return fun(self) + self.parent.parentTest(fun)
+            return fun(self) + self.parent.parent_test(fun)
         else:
             return fun(self)
 
@@ -48,63 +48,63 @@ class textNode:
         return self.text
 
 class parseTree:
-    def __init__(self, pt):
+    def __init__(self, parse_text):
 
-        def constructNode(text):
+        def construct_node(text):
 
-            def bracketRange(text):
-                bd = 0
+            def bracket_range(text):
+                bracket_depth = 0
                 for i in range(len(text)):
-                    c= text[i]
-                    if c == "(": bd += 1
-                    if c == ")": 
-                        bd -= 1
-                        if bd == 0:
+                    char = text[i]
+                    if char == "(":
+                        bracket_depth += 1
+                    if char == ")": 
+                        bracket_depth -= 1
+                        if bracket_depth == 0:
                             return i
 
             text = text.strip()
 
-            ns = []
+            nodes = []
 
             if "=(" in text:
                 while len(text) > 0 and "=(" in text:
-                    # we got a lojbanNode!
-                    n = lojbanNode(text[:text.find("=(")])
+                    # we got a LojbanNode!
+                    node = LojbanNode(text[:text.find("=(")])
 
                     insideText = text[text.find("=(") + 1:]
-                    insideText = insideText[:bracketRange(insideText) + 1]
+                    insideText = insideText[:bracket_range(insideText) + 1]
                     insideText = insideText.strip()
 
                     if not insideText:
                         break
 
-                    n.children = constructNode(insideText[1:-1])
+                    node.children = construct_node(insideText[1:-1])
 
-                    for ch in n.children:
-                        ch.parent = n
+                    for ch in node.children:
+                        ch.parent = node
 
-                    remText = str(node)
-                    print remText
+                    rem_text = str(node)
                     while "  " in text:
                         text = text.replace("  ", " ")
-                    text = (text[:text.find(remText)] + 
-                           text[text.find(remText) + len(remText):])
+                    text = (text[:text.find(rem_text)] + 
+                           text[text.find(rem_text) + len(rem_text):])
 
                     text = text.strip()
 
-                    ns.append(n)
+                    nodes.append(node)
                     text = text.strip()
             else:
                 # we got a textnode
-                ns.append(textNode(text))
+                nodes.append(TextNode(text))
 
-            return ns
+            return nodes
 
-        self.rootNode = constructNode(pt)[0]
+        self.root_node = construct_node(parse_text)[0]
 
         # make another, flat representation of the tree
         self.nodes = {}
-        def sumDicts(d1, ds):
+        def sum_dicts(d1, ds):
             if isinstance(ds, dict):
                 ds = [ds]
             if len(ds) == 1:
@@ -116,21 +116,21 @@ class parseTree:
                         d1[k] = d2[k]
                 return d1
             else:
-                return sumDicts(d1, sumDicts(ds[0], ds[1:]))
+                return sum_dicts(d1, sum_dicts(ds[0], ds[1:]))
 
-        def collectNodes(node):
-            if isinstance(node, textNode):
+        def collect_nodes(node):
+            if isinstance(node, TextNode):
                 return {"text": [node]}
             else:
-                return sumDicts({node.ltype: [node]},
-                                [collectNodes(n) for n in node.children])
+                return sum_dicts({node.ltype: [node]},
+                                [collect_nodes(n) for n in node.children])
 
-        self.nodes = collectNodes(self.rootNode)
+        self.nodes = collect_nodes(self.root_node)
 
     def __str__(self):
-        return str(self.rootNode)
+        return str(self.root_node)
 
-class lojbantext:
+class LojbanText:
     def splittext(self):
         # TODO: this must be easier
         tds = self.td.split(" ")
@@ -160,45 +160,45 @@ class lojbantext:
         # 3. see what can be parsed (camxes -t)
         for sent in self.sent:
             if call_camxes(sent, ["-t"]).strip() == sent.strip():
-                self.items.append(lojbansentence(sent))
+                self.items.append(LojbanSentence(sent))
             else:
-                self.items.append(unparsabletext(sent))
+                self.items.append(UnparsableText(sent))
 
         print "\n".join([str(it) for it in self.items])
 
-class lojbansentence:
+class LojbanSentence:
     def __init__(self, textdata):
-        self.td = textdata
+        self.textdata = textdata
         # 1. run camxes to get a parse tree
-        self.pt = call_camxes(textdata, ["-f"]).strip()
+        self.part = call_camxes(textdata, ["-f"]).strip()
 
-        self.pt = parseTree(self.pt)
+        self.part = parseTree(self.part)
 
         self.sug = []
 
         # 2. run checkers...
-        for ch in ltcheckers:
-            self.sug.extend(ch(self.td, self.pt))
+        for checker in LT_CHECKERS:
+            self.sug.extend(checker(self.textdata, self.part))
 
         print "\n".join(str(a) for a in self.sug)
 
     def __str__(self):
-        return "Lojbanic Sentence: %s" % self.pt
+        return "Lojbanic Sentence: %s" % self.part
 
-class unparsabletext:
+class UnparsableText:
     def __init__(self, textdata):
-        self.td = textdata
+        self.textdata = textdata
 
         self.sug = []
 
         # see what broke...
-        for ch in utcheckers:
-            self.sug.extend(ch(self.td))
+        for checker in UT_CHECKERS:
+            self.sug.extend(checker(self.textdata))
 
         print "\n".join(str(a) for a in self.sug)
 
     def __str__(self):
-        return "Unparsable Text: %s" % self.td
+        return "Unparsable Text: %s" % self.textdata
 
 ###############################################################################
 # checkers look at the text or parse tree and check for known mistakes, making
@@ -206,15 +206,15 @@ class unparsabletext:
 # they return a list of dicts with the keys "range", "mistake" and "suggestion"
 #
 
-ltcheckers = []
-utcheckers = []
+LT_CHECKERS = []
+UT_CHECKERS = []
 
 def ltcheck(fun):
-    ltcheckers.append(fun)
+    LT_CHECKERS.append(fun)
     return fun
 
 def utcheck(fun):
-    utcheckers.append(fun)
+    UT_CHECKERS.append(fun)
     return fun
 
 ###############################################################################
@@ -222,7 +222,7 @@ def utcheck(fun):
 #
 
 @ltcheck
-def forgotCuChecker(text, pt):
+def forgot_cu_checker(text, pt):
     if "sentence" not in pt.nodes:
         # there is no sentence node in the parse tree. Look for a selbri that
         # has more than one brivla inside.
@@ -240,11 +240,11 @@ def forgotCuChecker(text, pt):
     return []
 
 @ltcheck
-def gadrilessNuChecker(text, pt):
+def gadriless_nu_checker(text, part):
     sug = []
-    if "NU" in pt.nodes:
-        for nuNode in pt.nodes['NU']:
-            if not nuNode.parentTest(lambda node: node.ltype == "sumti6"):
+    if "NU" in part.nodes:
+        for nu_node in part.nodes['NU']:
+            if not nu_node.parent_test(lambda node: node.ltype == "sumti6"):
                 sug.append({"range": [0, 1], # FIXME: this sucks.
                             "mistake": "possibly accidental gadriless NU",
                             "suggestion": "while it's possible to build tanru "
@@ -255,12 +255,12 @@ def gadrilessNuChecker(text, pt):
     return sug
 
 @ltcheck
-def dotSideCmevlaChecker(text, pt):
+def dotside_cmevla_checker(text, part):
     sug = []
 
-    if "cmene" in pt.nodes:
-        for cmeneNode in pt.nodes["cmene"]:
-            cmene = cmeneNode.children[0].text
+    if "cmene" in part.nodes:
+        for cmene_node in part.nodes["cmene"]:
+            cmene = cmene_node.children[0].text
             if True in [a in cmene for a in ["la", "doi"]]:
                 sug.append({"range": [0, 1], # FIXME: blergh.
                             "mistake": "non-dotside incompatible cmevla",
@@ -275,7 +275,7 @@ def dotSideCmevlaChecker(text, pt):
 #
 
 @utcheck
-def invalidCharsChecker(text):
+def invalid_chars_checker(text):
     sug = []
     text = text.lower()
     if "h" in text:
@@ -299,7 +299,7 @@ def invalidCharsChecker(text):
     return sug
 
 @utcheck
-def invalidHPlacementChecker(text):
+def invalid_h_placement_checker(text):
     sug = []
     hs = findall(text, "'", [])
     print hs
@@ -313,14 +313,14 @@ def invalidHPlacementChecker(text):
     return sug
 
 @utcheck
-def baiMissingGadriChecker(text):
+def bai_missing_gadri_checker(text):
     sug = []
     # ki'u du'u is invalid, as is 
-    allbai = "ba'i bai bau be'i ca'i cau ci'e ci'o ci'u cu'u de'i di'o do'e "
+    allbai = ("ba'i bai bau be'i ca'i cau ci'e ci'o ci'u cu'u de'i di'o do'e "
     "du'i du'o fa'e fau fi'e ga'a gau ja'e ja'i ji'e ji'o ji'u ka'a ka'i "
     "kai ki'i ki'u koi ku'u la'u le'a li'e ma'e ma'i mau me'a me'e mu'i mu'u "
     "ni'i pa'a pa'u pi'o po'i pu'a pu'e ra'a ra'i rai ri'a ri'i sau si'u ta'i "
-    "tai ti'i ti'u tu'i va'o va'u zau zu'e".split()
+    "tai ti'i ti'u tu'i va'o va'u zau zu'e").split()
     allgadri = [a + " " for a in "le le'e le'i lei lo lo'e lo'i loi".split()]
     
     # TODO: Find out if all those test cases are really necessary, or if they
@@ -352,19 +352,21 @@ def baiMissingGadriChecker(text):
 ###############################################################################
 
 def analyze(text):
-    lto = lojbantext(text)
+    lto = LojbanText(text)
+    return lto
 
     # return a list of suggestions or something?!
 
 def main():
     text = " ".join(sys.stdin.readlines())
-    analyze(text)
+    lto = analyze(text)
+    print "%r" % lto
 
 print >> sys.stderr, """Available checkers:
  - for valid sentences:
-   -""", "\n   - ".join(a.__name__ for a in ltcheckers), """
+   -""", "\n   - ".join(a.__name__ for a in LT_CHECKERS), """
  - for invalid sentences:
-   -""", "\n   - ".join(a.__name__ for a in utcheckers)
+   -""", "\n   - ".join(a.__name__ for a in UT_CHECKERS)
 
 if __name__ == "__main__":
     main()
