@@ -26,7 +26,8 @@ class lojbanNode:
             return fun(self)
 
     def __str__(self):
-        return "%s=( %s )" % (self.ltype, " ".join(str(child) for child in self.children))
+        return "%s=( %s )" % (self.ltype, " ".join(str(child)
+                                                   for child in self.children))
 
 class textNode:
     def __init__(self, text):
@@ -85,7 +86,8 @@ class parseTree:
                     remText = str(n)
                     while "    " in text:
                         text = text.replace("    ", " ")
-                    text = text[:text.find(remText)] + text[text.find(remText) + len(remText):]
+                    text = (text[:text.find(remText)] + 
+                           text[text.find(remText) + len(remText):])
 
                     text = text.strip()
 
@@ -119,7 +121,8 @@ class parseTree:
             if isinstance(node, textNode):
                 return {"text": [node]}
             else:
-                return sumDicts({node.ltype: [node]}, [collectNodes(n) for n in node.children])
+                return sumDicts({node.ltype: [node]},
+                                [collectNodes(n) for n in node.children])
 
         self.nodes = collectNodes(self.rootNode)
 
@@ -220,17 +223,19 @@ def utcheck(fun):
 @ltcheck
 def forgotCuChecker(text, pt):
     if "sentence" not in pt.nodes:
-        # there is no sentence node in the parse tree. Look for a selbri that has
-        # more than one brivla inside.
+        # there is no sentence node in the parse tree. Look for a selbri that
+        # has more than one brivla inside.
 
-        # only look if there's a selbri, sentences with only vocatives for example
-        # are valid, too
+        # only look if there's a selbri, sentences with only
+        # vocatives for example are valid, too
         if "selbri3" in pt.nodes:
             selbrinode = pt.nodes['selbri3'][0]
             if selbrinode.test(lambda node: node.ltype == "BRIVLA") > 0:
                 return [{"range": [0, 10], # FIXME: this sucks.
                          "mistake": "forgot cu",
-                         "suggestion": "There is no bridi in this sentence, but there is a tanru. Did you maybe forget to use cu to seperate a sumti from the intended selbri?"}]
+                         "suggestion": "There is no bridi in this sentence, "
+                         "but there is a tanru. Did you maybe forget to use "
+                         "cu to seperate a sumti from the intended selbri?"}]
     return []
 
 @ltcheck
@@ -241,7 +246,10 @@ def gadrilessNuChecker(text, pt):
             if not nuNode.parentTest(lambda node: node.ltype == "sumti6"):
                 sug.append({"range": [0, 1], # FIXME: this sucks.
                             "mistake": "possibly accidental gadriless NU",
-                            "suggestion": "while it's possible to build tanru with NU elements inside, it's probable that you forgot to put a gadri (lo usually) before your NU."})
+                            "suggestion": "while it's possible to build tanru "
+                            "with NU elements inside, it's probable that you "
+                            "forgot to put a gadri (lo usually) before "
+                            "your NU."})
 
     return sug
 
@@ -255,7 +263,9 @@ def dotSideCmevlaChecker(text, pt):
             if True in [a in cmene for a in ["la", "doi"]]:
                 sug.append({"range": [0, 1], # FIXME: blergh.
                             "mistake": "non-dotside incompatible cmevla",
-                            "suggestion": "cmevla are not allowed to contain la or doi. The only way to use cmevla with la and doi inside is to be on the dot side"})
+                            "suggestion": "cmevla are not allowed to contain "
+                            "la or doi. The only way to use cmevla with la and "
+                            "doi inside is to be on the dot side"})
 
     return sug
 
@@ -270,17 +280,20 @@ def invalidCharsChecker(text):
     if "h" in text:
         sug.append({"range": [text.find("h"), text.find("h") + 1],
                     "mistake": "invalid character",
-                    "suggestion": "There is no h in the lojbanic alphabet! Use the character ' instead."})
+                    "suggestion": "There is no h in the lojbanic alphabet! "
+                    "Use the character ' instead."})
     
     if "q" in text:
         sug.append({"range": [text.find("q"), text.find("q") + 1],
                     "mistake": "invalid character",
-                    "suggestion": "There is no q in the lojbanic alphabet! Usually you can use k instead."})
+                    "suggestion": "There is no q in the lojbanic alphabet! "
+                    "Usually you can use k instead."})
 
     if "w" in text:
         sug.append({"range": [text.find("q"), text.find("q") + 1],
                     "mistake": "invalid character",
-                    "suggestion": "There is no w in the lojbanic alphabet! Usually you can use a diphtong with u or a v instead."})
+                    "suggestion": "There is no w in the lojbanic alphabet! "
+                    "Usually you can use a diphtong with u or a v instead."})
 
     return sug
 
@@ -290,7 +303,8 @@ def invalidHPlacementChecker(text):
     hs = findall(text, "'", [])
     print hs
     for h in hs:
-        if h == 0 or h >= len(text) - 1 or text[h-1] not in "aeiouy" or text[h+1] not in "aeiou":
+        if (h == 0 or h >= len(text) - 1 or
+           text[h-1] not in "aeiouy" or text[h+1] not in "aeiou"):
             sug.append({"range": [h, h+1],
                         "mistake": "' in invalid position",
                         "suggestion": "The ' can only appear between vowels."})
@@ -301,23 +315,33 @@ def invalidHPlacementChecker(text):
 def baiMissingGadriChecker(text):
     sug = []
     # ki'u du'u is invalid, as is 
-    allbai = "ba'i bai bau be'i ca'i cau ci'e ci'o ci'u cu'u de'i di'o do'e du'i du'o fa'e fau fi'e ga'a gau ja'e ja'i ji'e ji'o ji'u ka'a ka'i kai ki'i ki'u koi ku'u la'u le'a li'e ma'e ma'i mau me'a me'e mu'i mu'u ni'i pa'a pa'u pi'o po'i pu'a pu'e ra'a ra'i rai ri'a ri'i sau si'u ta'i tai ti'i ti'u tu'i va'o va'u zau zu'e".split()
+    allbai = "ba'i bai bau be'i ca'i cau ci'e ci'o ci'u cu'u de'i di'o do'e "
+    "du'i du'o fa'e fau fi'e ga'a gau ja'e ja'i ji'e ji'o ji'u ka'a ka'i "
+    "kai ki'i ki'u koi ku'u la'u le'a li'e ma'e ma'i mau me'a me'e mu'i mu'u "
+    "ni'i pa'a pa'u pi'o po'i pu'a pu'e ra'a ra'i rai ri'a ri'i sau si'u ta'i "
+    "tai ti'i ti'u tu'i va'o va'u zau zu'e".split()
     allgadri = [a + " " for a in "le le'e le'i lei lo lo'e lo'i loi".split()]
     
     # TODO: Find out if all those test cases are really necessary, or if they
-    #             would fail for text that parses anyway (what if there are other 
-    #             mistakes in the sentence?
+    #             would fail for text that parses anyway (what if there are
+    #             other mistakes in the sentence?
     for bai in allbai:
         if bai in text:
             allpos = findall(text, bai, [], 0)
             for pos in allpos:
                 print "checking %s at %s" % (bai, pos)
-                if text[pos - 1] == " " or text[pos - 2:pos] in "se te ve xe" or text[pos - 4:pos].endswith("jai"):
+                if (text[pos - 1] == " " or
+                        text[pos - 2:pos] in "se te ve xe" or
+                        text[pos - 4:pos].endswith("jai")):
                     if text[pos + len(bai)] == " ":
-                        if True not in [text[pos + len(bai):pos + len(bai) + 4].startswith(gadri) for gadri in allgadri]:
+                        if not any([text[pos + len(bai):pos + len(bai) + 4].
+                                    startswith(gadri) for gadri in allgadri]):
                             sug.append({"range": [pos, pos + len(bai) + 4],
-                                        "mistake": "apparently used a BAI without a sumti",
-                                        "suggestion": "add a lo or le after %s; BAI are sumtcita, so they need to be followed by a sumti." % bai})
+                                        "mistake": "apparently used a BAI "
+                                        "without a sumti",
+                                        "suggestion": "add a lo or le after "
+                                        "%s; BAI are sumtcita, so they need "
+                                        "to be followed by a sumti." % bai})
                 else:
                     print "'%s', '%s'" % (text[pos - 1], text[pos - 2:pos])
     return sug

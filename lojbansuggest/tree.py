@@ -5,7 +5,8 @@ from pprint import pprint
 from camxes import call_camxes
 import readline
 
-# TODO: there needs to be some kind of intelligence for place structures somewhere…
+# TODO: there needs to be some kind of intelligence for place
+#       structures somewhere…
 
 class LojbansuggestError(Exception): pass
 class MalformedTreeError(LojbansuggestError): pass
@@ -38,7 +39,9 @@ def parseTree(text):
 def sameGroup(a, b, recurse = True):
     if isinstance(a, list): a = a[0]
     # check for gismu, gismu1, gismu2, ...
-    if (len(a) > 1 and b.startswith(a[:-1])) or (b[-1] == "1" and b[:-1] == a) and b[-1].isalnum():
+    if ((len(a) > 1 and b.startswith(a[:-1])) or
+            (b[-1] == "1" and b[:-1] == a) 
+            and b[-1].isalnum()):
         return True
     # stack together I and IPre or IClause and IPre for example
     if b.endswith("Pre"):
@@ -67,7 +70,9 @@ def simpleName(name):
 def simplify(part):
     # try to simplify [fooclause [cmavo [foo ['foo'] ] ] ] to [foo ['foo'] ]
     try:
-        if part[1][0] == "CMAVO" and part[0].replace("h", "H").isupper() and part[0].startswith(part[1][1][0]):
+        if (part[1][0] == "CMAVO" and
+                part[0].replace("h", "H").isupper() and
+                part[0].startswith(part[1][1][0])):
             return [part[0], [part[1][1][1][0]]]
     except IndexError: pass
     # only simplify nodes that have one child only
@@ -77,7 +82,8 @@ def simplify(part):
         for sp in part[1:]:
             # do not try to simplify string leafs
             if isinstance(sp[0], str):
-                # only simplify nodes of the same group (like sumti with sumti1, sumti2, ...)
+                # only simplify nodes of the same group 
+                # (like sumti with sumti1, sumti2, ...)
                 if sameGroup(part[0], sp[0]):
                     if len(sp) > 1:
                         res.extend([simplify(a) for a in sp[1:]])
@@ -106,7 +112,8 @@ class NextPositionHint(SumtiPositionHint): # take the next free sumti spot
         self.counter += 1
         return self.counter - 1
 
-# FIXME: already filled places must be skipped (fe ti dunda fa mi do == mi ti do dunda)
+# FIXME: already filled places must be skipped
+#        (fe ti dunda fa mi do == mi ti do dunda)
 class FAPositionHint(NextPositionHint): 
     def __init__(self, pos): 
         self.counter = pos # use a tagged position
@@ -134,9 +141,14 @@ class InitialPositionHint(NextPositionHint):
 class SamePositionHint(SumtiPositionHint):
     def hookUp(self, prev):
         return prev
- 
-class BEPositionHint(BAIPositionHint): pass # this is a special case of a baitag, because we can just take the bai to be the tanru element.
-class COPositionHint(BEPositionHint): pass # this is an even more special case.
+
+
+# this is a special case of a baitag,
+# because we can just take the bai to be the tanru element.
+class BEPositionHint(BAIPositionHint): pass 
+
+# this is an even more special case.
+class COPositionHint(BEPositionHint): pass
 
 allSE = "jai se te ve xe".split()
 def applySe(SE, nums):
@@ -203,16 +215,21 @@ class SubsentenceTanruUnit(tanruUnit):
         self.sentence = sentence
 
     def __repr__(self):
-        return "SubsentenceTanruUnit(" + `self.abstractor` + ", " + `self.sentence` + ")"
+        return ("SubsentenceTanruUnit(%r, %r)" %
+                   (self.abstractor, self.sentence))
 
 def sumtiFromTerms(tree):
     sumti = []
     hint = SamePositionHint() # use whatever came before.
     def addSumti(sum):
         sumti.append((hint, sum))
-    if tree[0] != "terms": raise MalformedTreeError("Expected terms as root node, but got " + tree[0])
+    if tree[0] != "terms": 
+        raise MalformedTreeError("Expected terms as root node, "
+                                 "but got " + tree[0])
     for part in tree[1:]:
-        if part[0] not in ("sumti", "FA", "tag"): raise MalformedTreeError("Expected sumti, FA or tag, but got " + part[0])
+        if part[0] not in ("sumti", "FA", "tag"):
+            raise MalformedTreeError("Expected sumti, FA or tag, "
+                                     "but got " + part[0])
         if part[0] == "sumti":
             if part[1][0] == "KOhA":
                 addSumti(CmavoSumti(part[1][1][0]))
@@ -220,7 +237,8 @@ def sumtiFromTerms(tree):
                 addSumti(SelbriSumti(part[1][1][0], makeSelbri(part[2])))
             if part[1][0] == "LA":
                 if part[2][0] == "CMENE":
-                    addSumti(CmeneSumti(part[1][1][0], " ".join([leafTip(l) for l in part[2:]])))
+                    addSumti(CmeneSumti(part[1][1][0],
+                             " ".join([leafTip(l) for l in part[2:]])))
                 elif part[2][0] == "selbri":
                     addSumti(CmeneSumti(part[1][1][0], [makeSelbri(part[2])]))
         elif part[0] == "FA":
@@ -245,18 +263,21 @@ def makeTanruUnit(tree):
             elif part[0] == "NU":
                 abs += part[1][0]
         return SubsentenceTanruUnit(abs, makeSentence(fss[0][1]))
-    return tanruUnit(" ".join(leafTip(tp) for tp in tree[1:])) # come up with something clever for SE here as well
+    # come up with something clever for SE here as well
+    return tanruUnit(" ".join(leafTip(tp) for tp in tree[1:]))
 
 def makeSelbri(tree):
-    # we expect one selbri with or more tanruUnit -> BRIVLA -> gismu -> "gismu".
+    # we expect one selbri with or more tanruUnit -> BRIVLA -> gismu -> "gismu"
     res = []
-    if tree[0] != "selbri": raise MalformedTreeError("Expected a selbri, got a " + tree[0])
+    if tree[0] != "selbri": raise MalformedTreeError("Expected a selbri, "
+                                                     "got a " + tree[0])
     for tu in tree[1:]:
         res.append(makeTanruUnit(tu))
-    return Selbri(res) # this should be have a more meaningful analysis at base.
+    return Selbri(res) # this should be have a more meaningful analysis at base
 
 def selbriFromBridiTail(tree):
-    if tree[0] != "bridiTail": raise MalformedTreeError("Expected a bridiTail, got a " + tree[0])
+    if tree[0] != "bridiTail":
+        raise MalformedTreeError("Expected a bridiTail, got a " + tree[0])
     for ch in tree[1:]:
         if ch[0] == "selbri":
             return makeSelbri(ch)
@@ -285,9 +306,11 @@ def makeSentence(tree):
 # one or more of i or ni'o and then a paragraphs child.
 def makeText(tree):
     res = []
-    if tree[0] != "text": raise MalformedTreeError("Expected 'text' as base node.")
+    if tree[0] != "text": 
+        raise MalformedTreeError("Expected 'text' as base node.")
     for block in tree[-1]: # ignore all the stuff up front
-        if block[0] in ["I", "NIhO"]: continue # TODO: come up with a solution for nihos and is.
+        if block[0] in ["I", "NIhO"]: 
+            continue # TODO: come up with a solution for nihos and is.
         elif block[0] == "sentence":
             res.append(makeSentence(block))
     return res
