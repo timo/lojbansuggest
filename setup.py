@@ -6,7 +6,7 @@ setup(
         version = "0.2.2",
         author = "Timo Paulssen",
         author_email = "timo+lojbansuggest@wakelift.de",
-        download_url = "http://wakelift.de/lojban/software/python/lojbansuggest-0.2.1.tar.gz",
+        download_url = "http://wakelift.de/lojban/software/python/lojbansuggest-0.2.2.tar.gz",
         license = "BSD",
         install_requires = ["lojbantools"],
         scripts = ["scripts/%s" % filename for filename in ["suggest.py",
